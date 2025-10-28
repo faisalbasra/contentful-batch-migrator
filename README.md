@@ -1,7 +1,7 @@
 # Contentful Batch Migrator
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen)](https://nodejs.org)
+[![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
 
 > A robust solution for migrating large Contentful spaces without hitting rate limits.
 
@@ -47,7 +47,7 @@ This tool:
 
 ### Prerequisites
 
-- Node.js >= 14.0.0
+- Node.js >= 18.0.0 (LTS recommended)
 - npm or yarn
 - Contentful Management Token (CMA)
 

@@ -16,7 +16,7 @@ Complete guide for exporting content and assets from your Contentful space.
 Before exporting, ensure you have:
 
 - ✅ Contentful account with access to the source space
-- ✅ Node.js >= 14.0.0 installed
+- ✅ Node.js >= 18.0.0 installed (LTS recommended)
 - ✅ Contentful Management API Token (CMA)
 - ✅ Space ID of the source space
 - ✅ Sufficient disk space (export can be several GB)

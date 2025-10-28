@@ -81,7 +81,7 @@ Any other context or screenshots about the feature request.
 
 ### Prerequisites
 
-- Node.js >= 14.0.0
+- Node.js >= 18.0.0 (LTS recommended)
 - npm or yarn
 - Git
 - A Contentful account (for testing)

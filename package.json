@@ -35,7 +35,7 @@
   },
   "homepage": "https://github.com/faisalbasra/contentful-batch-migrator#readme",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "contentful-import": "^9.4.123",
