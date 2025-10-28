@@ -1,5 +1,5 @@
 {
-  "batchSize": 600,
+  "batchSize": 400,
   "sourceFile": "./contentful-export/exported-space.json",
   "sourceAssetsDir": "./contentful-export",
   "outputDir": "./batches",
