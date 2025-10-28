@@ -61,6 +61,9 @@ cd contentful-batch-migrator
 # Install dependencies
 npm install
 
+# See all available commands
+npm run help
+
 # Configure your migration
 cp batch-config.example.json batch-config.json
 # Edit batch-config.json with your credentials
@@ -69,6 +72,18 @@ cp batch-config.example.json batch-config.json
 npm run split    # Step 1: Split export
 npm run import   # Step 2: Import batches
 npm run validate # Step 3: Validate migration
+```
+
+### 📚 Available Commands
+
+```bash
+npm run help      # Show all available commands
+npm run split     # Split export into batches
+npm run import    # Import all batches
+npm run validate  # Validate migration
+npm run resume    # Resume failed import
+npm run clean     # Remove batches directory
+npm run clean:all # Remove batches and export
 ```
 
 ## 🔧 Configuration

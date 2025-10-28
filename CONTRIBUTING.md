@@ -116,9 +116,14 @@ Any other context or screenshots about the feature request.
    # Edit with your test space credentials
    ```
 
-6. **Test the setup**
+6. **See all available commands**
    ```bash
-   node split-contentful-export.js
+   npm run help
+   ```
+
+7. **Test the setup**
+   ```bash
+   npm run split
    ```
 
 ## 🌿 Git Workflow

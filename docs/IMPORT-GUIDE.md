@@ -23,6 +23,22 @@ Before starting the import:
 - ✅ Installed dependencies (`npm install`)
 - ✅ Sufficient time (2-3 hours for large imports)
 
+### 📚 Quick Reference - Available Commands
+
+If you're new to the tool, you can always see all available commands:
+
+```bash
+npm run help
+```
+
+This will display:
+- `npm run split` - Split export into batches
+- `npm run import` - Import all batches
+- `npm run validate` - Validate migration
+- `npm run resume` - Resume failed import
+- `npm run clean` - Remove batches directory
+- `npm run clean:all` - Remove batches and export
+
 ## Configuration
 
 ### Step 1: Create Configuration File
