@@ -20,7 +20,7 @@ function loadState() {
   if (!fs.existsSync(STATE_FILE)) {
     console.error('❌ No import state found. Nothing to resume.');
     console.error('   State file not found: ' + STATE_FILE);
-    console.error('\nPlease run: node import-batches.js');
+    console.error('\nPlease run: npm run import');
     process.exit(1);
   }
   return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
@@ -85,7 +85,7 @@ async function resumeImport() {
       if (maxCompleted >= manifest.totalBatches) {
         console.log('✅ All batches have been completed!');
         console.log('\nNext steps:');
-        console.log('  1. Run validation: node validate-migration.js');
+        console.log('  1. Run validation: npm run validate');
         console.log('  2. Test your content in the target space');
         process.exit(0);
       }
@@ -107,10 +107,10 @@ async function resumeImport() {
 
     await new Promise(resolve => setTimeout(resolve, 5000));
 
-    // Run import-batches.js with the start-from parameter
+    // Run bin/import.js with the start-from parameter
     console.log('🚀 Resuming import...\n');
 
-    const importProcess = spawn('node', ['import-batches.js', '--start-from', startFromBatch.toString()], {
+    const importProcess = spawn('node', ['bin/import.js', '--start-from', startFromBatch.toString()], {
       stdio: 'inherit'
     });
 
@@ -124,7 +124,7 @@ async function resumeImport() {
     });
 
     importProcess.on('error', (error) => {
-      console.error('\n❌ Error running import-batches.js:', error.message);
+      console.error('\n❌ Error running bin/import.js:', error.message);
       process.exit(1);
     });
 

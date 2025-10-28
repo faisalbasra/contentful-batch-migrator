@@ -108,7 +108,7 @@ Open `batch-config.json` and update:
 Split your large export into manageable batches:
 
 ```bash
-node split-contentful-export.js
+npm run split
 ```
 
 #### What Happens:
@@ -176,7 +176,7 @@ Configuration:
 
 Next steps:
   1. Review the batches in: batches
-  2. Run: node import-batches.js
+  2. Run: npm run import
 ```
 
 #### Verify Batches
@@ -234,7 +234,7 @@ Example output:
 Start the batch import process:
 
 ```bash
-node import-batches.js
+npm run import
 ```
 
 #### What Happens:
@@ -311,7 +311,7 @@ State saved to: batches/import-state.json
 🎉 All batches imported successfully!
 
 Next steps:
-  1. Run validation: node validate-migration.js
+  1. Run validation: npm run validate
   2. Test your content in: test
 ```
 
@@ -320,7 +320,7 @@ Next steps:
 Verify all content was imported correctly:
 
 ```bash
-node validate-migration.js
+npm run validate
 ```
 
 #### What It Checks:
@@ -484,7 +484,7 @@ Check Contentful UI during import:
 
 ```bash
 # Resume will retry failed batches
-node resume-import.js
+npm run resume
 ```
 
 ### Scenario 2: Import Interrupted
@@ -497,7 +497,7 @@ node resume-import.js
 
 ```bash
 # Resume from where it stopped
-node resume-import.js
+npm run resume
 ```
 
 Output:
@@ -549,8 +549,8 @@ Then re-split and import:
 
 ```bash
 rm -rf batches/
-node split-contentful-export.js
-node import-batches.js
+npm run split
+npm run import
 ```
 
 ### Scenario 4: Validation Fails
@@ -575,7 +575,7 @@ node import-batches.js
 
 3. Retry failed batches:
    ```bash
-   node resume-import.js
+   npm run resume
    ```
 
 ## Post-Import Validation
@@ -583,7 +583,7 @@ node import-batches.js
 ### 1. Count Verification
 
 ```bash
-node validate-migration.js
+npm run validate
 ```
 
 ### 2. Manual Spot Checks
@@ -615,7 +615,7 @@ In Contentful UI:
 
 ```bash
 # Import only batches 3-5
-node import-batches.js --start-from 3
+npm run import --start-from 3
 # Then stop manually after batch 5
 ```
 

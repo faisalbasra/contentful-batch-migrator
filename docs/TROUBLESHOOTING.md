@@ -54,8 +54,8 @@ Then re-split and import:
 
 ```bash
 rm -rf batches/
-node split-contentful-export.js
-node import-batches.js
+npm run split
+npm run import
 ```
 
 **Solution 3: Increase Max Retries**
@@ -131,7 +131,7 @@ The scripts automatically implement exponential backoff. If you see this frequen
 **Solution: Resume Import**
 
 ```bash
-node resume-import.js
+npm run resume
 ```
 
 ### Issue: Import Hangs/Freezes
@@ -156,7 +156,7 @@ node resume-import.js
 
 3. **Resume:**
    ```bash
-   node resume-import.js
+   npm run resume
    ```
 
 4. **If Still Hangs:**
@@ -200,7 +200,7 @@ All batches failed to import
 4. **Test Small Import:**
    ```bash
    # Try importing just batch 1
-   node import-batches.js --start-from 1
+   npm run import --start-from 1
    # Stop after batch 1 completes
    ```
 
@@ -240,7 +240,7 @@ If count is low, re-run split:
 
 ```bash
 rm -rf batches/
-node split-contentful-export.js
+npm run split
 ```
 
 **Solution 2: Check Asset URLs**
@@ -275,7 +275,7 @@ Asset still processing after 10 minutes
    ```bash
    # Contentful may still be processing
    # Wait 15-30 minutes
-   node resume-import.js
+   npm run resume
    ```
 
 2. **Check Asset in UI:**
@@ -343,7 +343,7 @@ Validation failed!
 **Solution 1: Retry Failed Batches**
 
 ```bash
-node resume-import.js
+npm run resume
 ```
 
 **Solution 2: Identify Missing Items**
@@ -390,7 +390,7 @@ npx contentful-import --config import-config.json
    cat batches/manifest.json
 
    # Re-import those batches
-   node import-batches.js --start-from 3  # Example
+   npm run import --start-from 3  # Example
    ```
 
 ## Memory Issues
@@ -673,12 +673,12 @@ Cannot create entry: content type missing
 2. **Re-split if Needed:**
    ```bash
    rm -rf batches/
-   node split-contentful-export.js
+   npm run split
    ```
 
 3. **Ensure Batch 1 Imports First:**
    ```bash
-   node import-batches.js --start-from 1
+   npm run import --start-from 1
    ```
 
 ## Getting Help

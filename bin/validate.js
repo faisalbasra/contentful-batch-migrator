@@ -213,7 +213,7 @@ async function validateMigration() {
       console.log('  - Asset upload failures');
       console.log('\nRecommended actions:');
       console.log('  1. Check error logs in: ' + path.join(outputDir, 'logs'));
-      console.log('  2. Run: node resume-import.js (if batches failed)');
+      console.log('  2. Run: npm run resume (if batches failed)');
       console.log('  3. Review failed items and re-import if needed');
       process.exit(1);
     } else if (warnings > 0) {

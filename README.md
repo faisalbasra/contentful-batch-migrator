@@ -127,7 +127,7 @@ npx contentful-export \
 Split your large export into batches:
 
 ```bash
-node split-contentful-export.js
+npm run split
 ```
 
 **Output:**
@@ -147,7 +147,7 @@ Creates `batches/` directory with subdirectories for each batch.
 Import all batches sequentially:
 
 ```bash
-node import-batches.js
+npm run import
 ```
 
 **Features:**
@@ -163,7 +163,7 @@ node import-batches.js
 Verify the migration was successful:
 
 ```bash
-node validate-migration.js
+npm run validate
 ```
 
 **Output:**
@@ -182,7 +182,7 @@ node validate-migration.js
 If import fails or is interrupted:
 
 ```bash
-node resume-import.js
+npm run resume
 ```
 
 Automatically detects where to resume and continues.
@@ -191,19 +191,21 @@ Automatically detects where to resume and continues.
 
 ```
 contentful-batch-migrator/
-├── split-contentful-export.js     # Split large exports into batches
-├── import-batches.js              # Import batches with rate limiting
-├── validate-migration.js          # Validate migration success
-├── resume-import.js               # Resume interrupted migrations
+├── bin/                           # Executable scripts
+│   ├── split.js                  # Split large exports into batches
+│   ├── import.js                 # Import batches with rate limiting
+│   ├── validate.js               # Validate migration success
+│   └── resume.js                 # Resume interrupted migrations
+├── docs/                          # Documentation
+│   ├── EXPORT-GUIDE.md           # Detailed export instructions
+│   ├── IMPORT-GUIDE.md           # Detailed import instructions
+│   └── TROUBLESHOOTING.md        # Common issues and solutions
 ├── batch-config.json              # Configuration (create from example)
 ├── batch-config.example.json      # Configuration template
 ├── package.json                   # Dependencies and scripts
 ├── README.md                      # This file
 ├── CONTRIBUTING.md                # Contribution guidelines
-├── docs/
-│   ├── EXPORT-GUIDE.md           # Detailed export instructions
-│   ├── IMPORT-GUIDE.md           # Detailed import instructions
-│   └── TROUBLESHOOTING.md        # Common issues and solutions
+├── LICENSE                        # MIT License
 └── contentful-export/             # Your exported data (not in repo)
     ├── exported-space.json
     └── [asset directories]
@@ -226,15 +228,15 @@ cp batch-config.example.json batch-config.json
 # Edit batch-config.json with EU space credentials
 
 # 3. Split into batches
-node split-contentful-export.js
+npm run split
 # Output: 7 batches created
 
 # 4. Import to EU space
-node import-batches.js
+npm run import
 # Takes ~2.5 hours with 3-minute delays
 
 # 5. Validate
-node validate-migration.js
+npm run validate
 # All checks pass ✅
 ```
 
@@ -257,14 +259,14 @@ node validate-migration.js
 ### Import Failures
 
 1. Check logs: `batches/logs/batch-XX-errors.log`
-2. Resume import: `node resume-import.js`
+2. Resume import: `npm run resume`
 3. If persists, reduce batch size
 
 ### Validation Mismatches
 
 1. Check failed batches: `batches/import-state.json`
 2. Review error logs
-3. Retry failed batches: `node resume-import.js`
+3. Retry failed batches: `npm run resume`
 
 📚 **Full guide**: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 

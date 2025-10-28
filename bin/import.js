@@ -124,7 +124,7 @@ async function importAllBatches(startFromBatch = 1) {
     // Load manifest
     const manifestPath = path.join(outputDir, 'manifest.json');
     if (!fs.existsSync(manifestPath)) {
-      throw new Error(`Manifest file not found: ${manifestPath}. Please run split-contentful-export.js first.`);
+      throw new Error(`Manifest file not found: ${manifestPath}. Please run npm run split first.`);
     }
 
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -224,12 +224,12 @@ async function importAllBatches(startFromBatch = 1) {
 
     if (failureCount > 0) {
       console.log(`\n⚠️  Some batches failed. Review error logs and run:`);
-      console.log(`  node resume-import.js`);
+      console.log(`  npm run resume`);
       process.exit(1);
     } else {
       console.log(`\n🎉 All batches imported successfully!`);
       console.log(`\nNext steps:`);
-      console.log(`  1. Run validation: node validate-migration.js`);
+      console.log(`  1. Run validation: npm run validate`);
       console.log(`  2. Test your content in: ${targetSpace.environmentId}`);
     }
 

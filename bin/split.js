@@ -260,7 +260,7 @@ async function splitExport() {
     console.log(`  - Manifest saved to: ${manifestPath}`);
     console.log(`\nNext steps:`);
     console.log(`  1. Review the batches in: ${outputDir}`);
-    console.log(`  2. Run: node import-batches.js`);
+    console.log(`  2. Run: npm run import`);
 
   } catch (error) {
     console.error('❌ Error during splitting:', error.message);
