@@ -27,6 +27,9 @@ export-errors.log
 import-state.json
 manifest.json
 logs/
+export-summary.md
+*-summary.md
+README-BATCHED-IMPORT.md
 
 # ============================================
 # Node.js
