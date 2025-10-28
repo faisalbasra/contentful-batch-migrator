@@ -1,0 +1,106 @@
+# Contentful Batch Migrator - .gitignore
+
+# ============================================
+# Sensitive Configuration & Credentials
+# ============================================
+batch-config.json
+import-config.json
+export-config.json
+.env
+.env.local
+*.pem
+*.key
+
+# ============================================
+# Contentful Export Data (Large Files)
+# ============================================
+contentful-export/
+batches/
+*.ctfassets.net/
+
+# ============================================
+# Logs & State Files
+# ============================================
+*.log
+import-errors.log
+export-errors.log
+import-state.json
+manifest.json
+logs/
+
+# ============================================
+# Node.js
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log*
+
+# ============================================
+# IDE & Editor
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# Operating System
+# ============================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# Temporary Files
+# ============================================
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# ============================================
+# Build & Distribution
+# ============================================
+dist/
+build/
+out/
+
+# ============================================
+# Test Coverage
+# ============================================
+coverage/
+.nyc_output/
+
+# ============================================
+# Optional: Keep Example Files
+# ============================================
+!batch-config.example.json
+!docs/
+!README.md
+!CONTRIBUTING.md
+!LICENSE

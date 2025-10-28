@@ -1,0 +1,22 @@
+{
+  "batchSize": 600,
+  "sourceFile": "./contentful-export/exported-space.json",
+  "sourceAssetsDir": "./contentful-export",
+  "outputDir": "./batches",
+  "preserveStructure": true,
+  "targetSpace": {
+    "spaceId": "YOUR_TARGET_SPACE_ID",
+    "environmentId": "master",
+    "managementToken": "YOUR_CONTENTFUL_MANAGEMENT_TOKEN",
+    "host": "api.contentful.com"
+  },
+  "importOptions": {
+    "uploadAssets": true,
+    "skipContentPublishing": false,
+    "skipAssetUpdates": false,
+    "skipContentUpdates": false,
+    "delayBetweenBatches": 180000,
+    "maxRetries": 3,
+    "retryDelay": 5000
+  }
+}

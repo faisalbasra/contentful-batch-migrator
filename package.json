@@ -1,0 +1,55 @@
+{
+  "name": "contentful-batch-migrator",
+  "version": "1.0.0",
+  "description": "A robust solution for migrating large Contentful spaces without hitting rate limits",
+  "main": "split-contentful-export.js",
+  "scripts": {
+    "split": "node split-contentful-export.js",
+    "import": "node import-batches.js",
+    "validate": "node validate-migration.js",
+    "resume": "node resume-import.js",
+    "clean": "rm -rf batches/",
+    "clean:all": "rm -rf batches/ contentful-export/",
+    "help": "echo '\n📚 Available Commands:\n  npm run split     - Split export into batches\n  npm run import    - Import all batches\n  npm run validate  - Validate migration\n  npm run resume    - Resume failed import\n  npm run clean     - Remove batches directory\n  npm run clean:all - Remove batches and export\n'"
+  },
+  "keywords": [
+    "contentful",
+    "migration",
+    "batch",
+    "import",
+    "export",
+    "cms",
+    "content-management",
+    "rate-limit",
+    "bulk-import",
+    "contentful-migration"
+  ],
+  "author": "Faisal Basra <faisal.basra@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/faisalbasra/contentful-batch-migrator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/faisalbasra/contentful-batch-migrator/issues"
+  },
+  "homepage": "https://github.com/faisalbasra/contentful-batch-migrator#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "contentful-import": "^9.4.123",
+    "contentful-management": "^11.61.1"
+  },
+  "devDependencies": {},
+  "files": [
+    "split-contentful-export.js",
+    "import-batches.js",
+    "validate-migration.js",
+    "resume-import.js",
+    "batch-config.example.json",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ]
+}
