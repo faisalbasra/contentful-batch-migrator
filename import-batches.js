@@ -66,7 +66,6 @@ function importBatch(batchDir, batchNum, isFirstBatch) {
       uploadAssets: importOptions.uploadAssets,
       assetsDirectory: batchDir,
       skipContentModel: !isFirstBatch, // Only import content model in first batch
-      skipLocales: !isFirstBatch,
       skipContentPublishing: importOptions.skipContentPublishing,
       skipContentUpdates: importOptions.skipContentUpdates,
       skipAssetUpdates: importOptions.skipAssetUpdates,
