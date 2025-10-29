@@ -2,7 +2,8 @@
 
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const contentful = require('contentful-management');
+const RateLimiter = require('./rateLimiter');
 
 // Load configuration
 const config = JSON.parse(fs.readFileSync('./batch-config.json', 'utf8'));
@@ -10,7 +11,8 @@ const config = JSON.parse(fs.readFileSync('./batch-config.json', 'utf8'));
 const {
   outputDir,
   targetSpace,
-  importOptions
+  importOptions,
+  rateLimits
 } = config;
 
 const STATE_FILE = path.join(outputDir, 'import-state.json');
@@ -48,72 +50,328 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Function to run contentful import for a batch
-function importBatch(batchDir, batchNum, isFirstBatch) {
-  return new Promise((resolve, reject) => {
-    const batchLogFile = path.join(LOG_DIR, `batch-${batchNum}.log`);
-    const batchErrorFile = path.join(LOG_DIR, `batch-${batchNum}-errors.log`);
+// Log to file and console
+function log(message, logStream) {
+  console.log(message);
+  if (logStream) {
+    logStream.write(message + '\n');
+  }
+}
 
-    const logStream = fs.createWriteStream(batchLogFile, { flags: 'a' });
-    const errorStream = fs.createWriteStream(batchErrorFile, { flags: 'a' });
+// Function to import a single batch using SDK
+async function importBatch(batchDir, batchNum, isFirstBatch) {
+  const batchLogFile = path.join(LOG_DIR, `batch-${batchNum}.log`);
+  const batchErrorFile = path.join(LOG_DIR, `batch-${batchNum}-errors.log`);
 
-    // Build import config for this batch
-    const batchConfig = {
-      spaceId: targetSpace.spaceId,
-      environmentId: targetSpace.environmentId,
-      managementToken: targetSpace.managementToken,
-      contentFile: path.join(batchDir, 'exported-space.json'),
-      uploadAssets: importOptions.uploadAssets,
-      assetsDirectory: batchDir,
-      skipContentModel: !isFirstBatch, // Only import content model in first batch
-      skipContentPublishing: importOptions.skipContentPublishing,
-      skipContentUpdates: importOptions.skipContentUpdates,
-      skipAssetUpdates: importOptions.skipAssetUpdates,
-      host: targetSpace.host,
-      errorLogFile: batchErrorFile
-    };
+  const logStream = fs.createWriteStream(batchLogFile, { flags: 'a' });
+  const errorStream = fs.createWriteStream(batchErrorFile, { flags: 'a' });
 
-    const batchConfigPath = path.join(batchDir, 'import-config.json');
-    fs.writeFileSync(batchConfigPath, JSON.stringify(batchConfig, null, 2));
+  try {
+    // Read batch data
+    const batchJsonPath = path.join(batchDir, 'exported-space.json');
+    const batchData = JSON.parse(fs.readFileSync(batchJsonPath, 'utf8'));
 
-    // Run contentful import CLI
-    const importProcess = spawn('npx', [
-      'contentful-import',
-      '--config',
-      batchConfigPath
-    ], {
-      stdio: ['ignore', 'pipe', 'pipe']
+    log(`\n📦 Batch Contents:`, logStream);
+    log(`  - Content Types: ${batchData.contentTypes?.length || 0}`, logStream);
+    log(`  - Locales: ${batchData.locales?.length || 0}`, logStream);
+    log(`  - Tags: ${batchData.tags?.length || 0}`, logStream);
+    log(`  - Assets: ${batchData.assets?.length || 0}`, logStream);
+    log(`  - Entries: ${batchData.entries?.length || 0}`, logStream);
+
+    // Initialize rate limiter
+    const rateLimiter = rateLimits?.enabled
+      ? new RateLimiter({
+          requestsPerSecond: rateLimits.requestsPerSecond,
+          requestsPerHour: rateLimits.requestsPerHour,
+          verbose: rateLimits.verbose
+        })
+      : null;
+
+    if (rateLimiter) {
+      log(`\n⏱️  Rate Limiter: ${rateLimits.requestsPerSecond} req/sec, ${rateLimits.requestsPerHour} req/hour`, logStream);
+    } else {
+      log(`\n⚠️  Rate Limiter: DISABLED`, logStream);
+    }
+
+    // Initialize Contentful Management client
+    log(`\n🔌 Connecting to Contentful...`, logStream);
+    const client = contentful.createClient({
+      accessToken: targetSpace.managementToken,
+      host: targetSpace.host || 'api.contentful.com'
     });
 
-    importProcess.stdout.on('data', (data) => {
-      const output = data.toString();
-      process.stdout.write(output);
-      logStream.write(output);
-    });
+    const space = await client.getSpace(targetSpace.spaceId);
+    const environment = await space.getEnvironment(targetSpace.environmentId);
+    log(`✅ Connected to space: ${targetSpace.spaceId}, environment: ${targetSpace.environmentId}`, logStream);
 
-    importProcess.stderr.on('data', (data) => {
-      const output = data.toString();
-      process.stderr.write(output);
-      errorStream.write(output);
-    });
+    // Import content model (first batch only)
+    if (isFirstBatch && batchData.contentTypes?.length > 0) {
+      log(`\n📐 Importing Content Model...`, logStream);
 
-    importProcess.on('close', (code) => {
-      logStream.end();
-      errorStream.end();
+      // Import locales first
+      if (batchData.locales?.length > 0) {
+        log(`  📍 Importing ${batchData.locales.length} locales...`, logStream);
+        for (const locale of batchData.locales) {
+          try {
+            const throttledCall = async () => {
+              // Check if locale exists
+              const locales = await environment.getLocales();
+              const existingLocale = locales.items.find(l => l.code === locale.code);
 
-      if (code === 0) {
-        resolve({ success: true, batchNum });
-      } else {
-        reject(new Error(`Import process exited with code ${code}`));
+              if (!existingLocale) {
+                return await environment.createLocale(locale);
+              }
+              return existingLocale;
+            };
+
+            if (rateLimiter) {
+              await rateLimiter.throttle(throttledCall);
+            } else {
+              await throttledCall();
+            }
+
+            log(`    ✅ Locale: ${locale.code}`, logStream);
+          } catch (error) {
+            log(`    ⚠️  Locale ${locale.code}: ${error.message}`, errorStream);
+          }
+        }
       }
-    });
 
-    importProcess.on('error', (error) => {
-      logStream.end();
-      errorStream.end();
-      reject(error);
-    });
-  });
+      // Import tags
+      if (batchData.tags?.length > 0) {
+        log(`  🏷️  Importing ${batchData.tags.length} tags...`, logStream);
+        for (const tag of batchData.tags) {
+          try {
+            const throttledCall = async () => {
+              return await environment.createTag(tag.sys.id, tag);
+            };
+
+            if (rateLimiter) {
+              await rateLimiter.throttle(throttledCall);
+            } else {
+              await throttledCall();
+            }
+
+            log(`    ✅ Tag: ${tag.name}`, logStream);
+          } catch (error) {
+            // Tags may already exist, that's ok
+            if (!error.message.includes('already exists')) {
+              log(`    ⚠️  Tag ${tag.name}: ${error.message}`, errorStream);
+            }
+          }
+        }
+      }
+
+      // Import content types
+      log(`  📋 Importing ${batchData.contentTypes.length} content types...`, logStream);
+      for (const contentType of batchData.contentTypes) {
+        try {
+          const throttledCall = async () => {
+            const ct = await environment.createContentTypeWithId(contentType.sys.id, contentType);
+            if (!importOptions.skipContentPublishing) {
+              return await ct.publish();
+            }
+            return ct;
+          };
+
+          if (rateLimiter) {
+            await rateLimiter.throttle(throttledCall);
+          } else {
+            await throttledCall();
+          }
+
+          log(`    ✅ Content Type: ${contentType.name}`, logStream);
+        } catch (error) {
+          log(`    ❌ Content Type ${contentType.name}: ${error.message}`, errorStream);
+          throw error;
+        }
+      }
+
+      // Import editor interfaces
+      if (batchData.editorInterfaces?.length > 0) {
+        log(`  🖥️  Importing ${batchData.editorInterfaces.length} editor interfaces...`, logStream);
+        for (const editorInterface of batchData.editorInterfaces) {
+          try {
+            const throttledCall = async () => {
+              const contentType = await environment.getContentType(editorInterface.sys.contentType.sys.id);
+              return await contentType.getEditorInterface().then(ei => {
+                ei.controls = editorInterface.controls;
+                return ei.update();
+              });
+            };
+
+            if (rateLimiter) {
+              await rateLimiter.throttle(throttledCall);
+            } else {
+              await throttledCall();
+            }
+
+            log(`    ✅ Editor Interface: ${editorInterface.sys.contentType.sys.id}`, logStream);
+          } catch (error) {
+            log(`    ⚠️  Editor Interface ${editorInterface.sys.contentType.sys.id}: ${error.message}`, errorStream);
+          }
+        }
+      }
+    }
+
+    // Import assets
+    if (batchData.assets?.length > 0) {
+      log(`\n📁 Importing ${batchData.assets.length} assets...`, logStream);
+      let assetsImported = 0;
+
+      for (const asset of batchData.assets) {
+        try {
+          // Create or update asset
+          const throttledCreate = async () => {
+            if (importOptions.skipAssetUpdates) {
+              // Check if asset exists
+              try {
+                return await environment.getAsset(asset.sys.id);
+              } catch (error) {
+                // Asset doesn't exist, create it
+                return await environment.createAssetWithId(asset.sys.id, asset);
+              }
+            } else {
+              return await environment.createAssetWithId(asset.sys.id, asset);
+            }
+          };
+
+          const newAsset = rateLimiter
+            ? await rateLimiter.throttle(throttledCreate)
+            : await throttledCreate();
+
+          // Process for all locales if upload is enabled
+          if (importOptions.uploadAssets) {
+            const throttledProcess = async () => {
+              return await newAsset.processForAllLocales();
+            };
+
+            const processedAsset = rateLimiter
+              ? await rateLimiter.throttle(throttledProcess)
+              : await throttledProcess();
+
+            // Wait for processing to complete
+            let attempts = 0;
+            const maxAttempts = 30;
+            let fullyProcessed = false;
+
+            while (attempts < maxAttempts && !fullyProcessed) {
+              await sleep(2000); // Wait 2 seconds between checks
+
+              const throttledGet = async () => {
+                return await environment.getAsset(asset.sys.id);
+              };
+
+              const checkedAsset = rateLimiter
+                ? await rateLimiter.throttle(throttledGet)
+                : await throttledGet();
+
+              // Check if all locales are processed
+              fullyProcessed = Object.values(checkedAsset.fields.file || {}).every(
+                file => file.url
+              );
+
+              attempts++;
+            }
+
+            // Publish asset if not skipping
+            if (!importOptions.skipContentPublishing && fullyProcessed) {
+              const throttledPublish = async () => {
+                const assetToPublish = await environment.getAsset(asset.sys.id);
+                return await assetToPublish.publish();
+              };
+
+              if (rateLimiter) {
+                await rateLimiter.throttle(throttledPublish);
+              } else {
+                await throttledPublish();
+              }
+            }
+          }
+
+          assetsImported++;
+          if (assetsImported % 10 === 0) {
+            log(`  📊 Progress: ${assetsImported}/${batchData.assets.length} assets`, logStream);
+          }
+        } catch (error) {
+          log(`  ❌ Asset ${asset.sys.id}: ${error.message}`, errorStream);
+          // Continue with other assets
+        }
+      }
+
+      log(`  ✅ Imported ${assetsImported}/${batchData.assets.length} assets`, logStream);
+    }
+
+    // Import entries
+    if (batchData.entries?.length > 0) {
+      log(`\n📝 Importing ${batchData.entries.length} entries...`, logStream);
+      let entriesImported = 0;
+
+      for (const entry of batchData.entries) {
+        try {
+          const contentTypeId = entry.sys.contentType.sys.id;
+
+          // Create or update entry
+          const throttledCreate = async () => {
+            if (importOptions.skipContentUpdates) {
+              // Check if entry exists
+              try {
+                return await environment.getEntry(entry.sys.id);
+              } catch (error) {
+                // Entry doesn't exist, create it
+                return await environment.createEntryWithId(contentTypeId, entry.sys.id, entry);
+              }
+            } else {
+              return await environment.createEntryWithId(contentTypeId, entry.sys.id, entry);
+            }
+          };
+
+          const newEntry = rateLimiter
+            ? await rateLimiter.throttle(throttledCreate)
+            : await throttledCreate();
+
+          // Publish entry if not skipping
+          if (!importOptions.skipContentPublishing) {
+            const throttledPublish = async () => {
+              return await newEntry.publish();
+            };
+
+            if (rateLimiter) {
+              await rateLimiter.throttle(throttledPublish);
+            } else {
+              await throttledPublish();
+            }
+          }
+
+          entriesImported++;
+          if (entriesImported % 50 === 0) {
+            log(`  📊 Progress: ${entriesImported}/${batchData.entries.length} entries`, logStream);
+          }
+        } catch (error) {
+          log(`  ❌ Entry ${entry.sys.id}: ${error.message}`, errorStream);
+          // Continue with other entries
+        }
+      }
+
+      log(`  ✅ Imported ${entriesImported}/${batchData.entries.length} entries`, logStream);
+    }
+
+    // Print rate limiter stats
+    if (rateLimiter) {
+      rateLimiter.printStats();
+    }
+
+    logStream.end();
+    errorStream.end();
+
+    return { success: true, batchNum };
+
+  } catch (error) {
+    log(`\n❌ Batch import failed: ${error.message}`, errorStream);
+    logStream.end();
+    errorStream.end();
+    throw error;
+  }
 }
 
 // Main import function

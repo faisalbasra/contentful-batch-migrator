@@ -18,5 +18,11 @@
     "delayBetweenBatches": 180000,
     "maxRetries": 3,
     "retryDelay": 5000
+  },
+  "rateLimits": {
+    "enabled": true,
+    "requestsPerSecond": 10,
+    "requestsPerHour": 36000,
+    "verbose": true
   }
 }
