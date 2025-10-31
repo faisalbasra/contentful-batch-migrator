@@ -29,6 +29,7 @@ manifest.json
 logs/
 export-summary.md
 *-summary.md
+*-report.json
 README-BATCHED-IMPORT.md
 
 # ============================================

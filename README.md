@@ -10,7 +10,8 @@ Migrate thousands of assets and entries between Contentful spaces by intelligent
 ## 🚀 Features
 
 - **Batch Processing**: Automatically split large exports into configurable batch sizes
-- **Rate Limit Safe**: Built-in delays and exponential backoff to avoid API rate limits
+- **Client-Side Rate Limiting**: Token bucket algorithm enforces API rate limits (10 req/sec, 36K req/hour)
+- **Draft Cleanup**: Identify and remove invalid/orphan draft entries before migration
 - **Smart Relationships**: Maintains asset-entry relationships across batches
 - **Resume Support**: Automatically resume failed or interrupted migrations
 - **Progress Tracking**: Detailed logs and state management
@@ -77,13 +78,14 @@ npm run validate # Step 3: Validate migration
 ### 📚 Available Commands
 
 ```bash
-npm run help      # Show all available commands
-npm run split     # Split export into batches
-npm run import    # Import all batches
-npm run validate  # Validate migration
-npm run resume    # Resume failed import
-npm run clean     # Remove batches directory
-npm run clean:all # Remove batches and export
+npm run help           # Show all available commands
+npm run cleanup-drafts # Analyze and remove invalid drafts
+npm run split          # Split export into batches
+npm run import         # Import all batches
+npm run validate       # Validate migration
+npm run resume         # Resume failed import
+npm run clean          # Remove batches directory
+npm run clean:all      # Remove batches and export
 ```
 
 ## 🔧 Configuration
@@ -92,7 +94,7 @@ Edit `batch-config.json`:
 
 ```json
 {
-  "batchSize": 600,
+  "batchSize": 400,
   "sourceFile": "./contentful-export/exported-space.json",
   "sourceAssetsDir": "./contentful-export",
   "outputDir": "./batches",
@@ -108,6 +110,12 @@ Edit `batch-config.json`:
     "delayBetweenBatches": 180000,
     "maxRetries": 3,
     "retryDelay": 5000
+  },
+  "rateLimits": {
+    "enabled": true,
+    "requestsPerSecond": 10,
+    "requestsPerHour": 36000,
+    "verbose": true
   }
 }
 ```
@@ -116,10 +124,15 @@ Edit `batch-config.json`:
 
 | Option | Description | Default | Recommended |
 |--------|-------------|---------|-------------|
-| `batchSize` | Assets per batch | 600 | 500-700 |
+| `batchSize` | Assets per batch | 400 | 400-700 |
 | `delayBetweenBatches` | Wait time between batches (ms) | 180000 | 180000-300000 |
 | `maxRetries` | Retry attempts per batch | 3 | 3-5 |
 | `retryDelay` | Initial retry delay (ms) | 5000 | 5000-10000 |
+| `rateLimits.enabled` | Enable client-side rate limiting | true | true |
+| `rateLimits.requestsPerSecond` | Max requests per second | 10 | 10 |
+| `rateLimits.requestsPerHour` | Max requests per hour | 36000 | 36000 |
+
+📚 **Rate limiting details**: [docs/RATE-LIMITING.md](docs/RATE-LIMITING.md)
 
 ## 📖 Usage
 
@@ -137,7 +150,47 @@ npx contentful-export \
 
 📚 **Detailed guide**: [docs/EXPORT-GUIDE.md](docs/EXPORT-GUIDE.md)
 
-### Step 2: Split the Export
+### Step 2: Clean Invalid Drafts (Optional but Recommended)
+
+If your export contains draft entries with missing required fields or orphan drafts, clean them before importing:
+
+```bash
+npm run cleanup-drafts
+```
+
+**Output:**
+```
+📊 Analysis Summary:
+─────────────────────────────────────────────────────────
+Total Entries:                    11985
+  ├─ Valid Published Entries:     11850
+  ├─ Valid Draft Entries:         100
+  ├─ Invalid Drafts:              25 ⚠️
+  └─ Orphan Drafts:               10 ⚠️
+
+Total Assets:                     4126
+  ├─ Valid Published Assets:      4100
+  ├─ Valid Draft Assets:          20
+  └─ Invalid Asset Drafts:        6 ⚠️
+
+Total Items to Remove:            41 🗑️
+```
+
+**What it does:**
+- Identifies draft entries with missing required fields
+- Finds orphan drafts (content type doesn't exist)
+- Detects invalid asset drafts (missing files)
+- Creates `draft-cleanup-report.json` with detailed analysis
+- Generates cleaned export: `contentful-export/exported-space-cleaned.json`
+
+**Next:** Update your `batch-config.json` to use the cleaned file:
+```json
+{
+  "sourceFile": "./contentful-export/exported-space-cleaned.json"
+}
+```
+
+### Step 3: Split the Export
 
 Split your large export into batches:
 
@@ -157,7 +210,7 @@ npm run split
 
 Creates `batches/` directory with subdirectories for each batch.
 
-### Step 3: Import Batches
+### Step 4: Import Batches
 
 Import all batches sequentially:
 
@@ -171,9 +224,9 @@ npm run import
 - Retries failed batches
 - Saves progress state
 
-**Expected time**: 2-3 hours for ~4,000 assets (depends on batch size and delays)
+**Expected time**: 3-5 hours for ~4,000 assets (with rate limiting enabled)
 
-### Step 4: Validate Migration
+### Step 5: Validate Migration
 
 Verify the migration was successful:
 
@@ -207,6 +260,8 @@ Automatically detects where to resume and continues.
 ```
 contentful-batch-migrator/
 ├── bin/                           # Executable scripts
+│   ├── rateLimiter.js            # Token bucket rate limiter
+│   ├── cleanup-drafts.js         # Remove invalid/orphan drafts
 │   ├── split.js                  # Split large exports into batches
 │   ├── import.js                 # Import batches with rate limiting
 │   ├── validate.js               # Validate migration success
@@ -214,6 +269,7 @@ contentful-batch-migrator/
 ├── docs/                          # Documentation
 │   ├── EXPORT-GUIDE.md           # Detailed export instructions
 │   ├── IMPORT-GUIDE.md           # Detailed import instructions
+│   ├── RATE-LIMITING.md          # Rate limiting details
 │   └── TROUBLESHOOTING.md        # Common issues and solutions
 ├── batch-config.json              # Configuration (create from example)
 ├── batch-config.example.json      # Configuration template
@@ -238,19 +294,22 @@ npx contentful-export \
   --export-dir ./contentful-export \
   --download-assets
 
-# 2. Configure target (EU space)
+# 2. Clean invalid drafts (optional)
+npm run cleanup-drafts
+
+# 3. Configure target (EU space)
 cp batch-config.example.json batch-config.json
 # Edit batch-config.json with EU space credentials
 
-# 3. Split into batches
+# 4. Split into batches
 npm run split
 # Output: 7 batches created
 
-# 4. Import to EU space
+# 5. Import to EU space
 npm run import
-# Takes ~2.5 hours with 3-minute delays
+# Takes ~3-5 hours with rate limiting
 
-# 5. Validate
+# 6. Validate
 npm run validate
 # All checks pass ✅
 ```
@@ -269,6 +328,16 @@ npm run validate
     "delayBetweenBatches": 300000  // 5 minutes instead of 3
   }
 }
+```
+
+### Import Failures Due to Invalid Drafts
+
+**Solution**: Clean invalid drafts before importing
+
+```bash
+npm run cleanup-drafts
+# Review draft-cleanup-report.json
+# Update batch-config.json to use cleaned file
 ```
 
 ### Import Failures
@@ -340,18 +409,14 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ 446 tags
 
 **Performance:**
-- Average batch import: 10-15 minutes
-- Full migration (7 batches): 2-3 hours
+- Average batch import: 20-30 minutes (with rate limiting)
+- Full migration (7 batches): 3-5 hours (with rate limiting)
 - Success rate: 100% (with retries)
 
 ## 🗺️ Roadmap
 
-- [ ] Interactive CLI wizard for configuration
-- [ ] Progress bar for batch imports
-- [ ] Parallel batch processing (with rate limit awareness)
-- [ ] Web UI for monitoring migrations
-- [ ] Docker support
-- [ ] CI/CD integration examples
+- [x] **Client-side rate limiting** - Token bucket algorithm to respect API limits
+- [x] **Draft cleanup utility** - Identify and remove invalid/orphan drafts before migration
 
 ## ⚠️ Important Notes
 
