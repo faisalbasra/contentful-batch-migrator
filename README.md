@@ -5,7 +5,7 @@
 
 > A robust solution for migrating large Contentful spaces without hitting rate limits.
 
-Migrate thousands of assets and entries between Contentful spaces by intelligently splitting them into manageable batches. Perfect for moving content between regions (US → EU), environments, or organizations.
+Migrate thousands of assets and entries between Contentful spaces by intelligently splitting them into manageable batches. Perfect for moving content between regions, environments, or organizations.
 
 ## 🚀 Features
 
@@ -284,7 +284,7 @@ contentful-batch-migrator/
 
 ## 🎬 Example Migration
 
-**Scenario**: Migrate 4,126 assets and 11,985 entries from US space to EU space
+**Scenario**: Migrate 4,100 assets and 11,900 entries
 
 ```bash
 # 1. Export from US space
@@ -403,10 +403,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📊 Stats & Performance
 
 **Tested with:**
-- ✅ 4,126 assets (4.6GB)
-- ✅ 11,985 entries
+- ✅ 4,100 assets (4.6GB)
+- ✅ 11,900 entries
 - ✅ 60 content types
-- ✅ 446 tags
+- ✅ 440 tags
 
 **Performance:**
 - Average batch import: 20-30 minutes (with rate limiting)
