@@ -1,0 +1,62 @@
+{
+  "name": "contentful-batch-migrator",
+  "version": "1.0.0",
+  "description": "A robust solution for migrating large Contentful spaces without hitting rate limits",
+  "main": "bin/split.js",
+  "scripts": {
+    "split": "node bin/split.js",
+    "import": "node bin/import.js",
+    "import:cli": "node bin/import-cli.js",
+    "import:direct": "node bin/import-direct.js",
+    "test:import:cli": "node bin/test-import-cli.js",
+    "validate": "node bin/validate.js",
+    "resume": "node bin/resume.js",
+    "resume:cli": "node bin/resume-cli.js",
+    "cascade-publish": "node bin/cascade-publish.js",
+    "cascade-publish:dry-run": "node bin/cascade-publish.js --dry-run",
+    "cleanup-drafts": "node bin/cleanup-drafts.js",
+    "strip-validations": "node bin/strip-validations.js",
+    "restore-validations": "node bin/restore-validations.js",
+    "transform-uploadfrom": "node bin/transform-to-uploadfrom.js",
+    "clean": "rm -rf batches/",
+    "clean:all": "rm -rf batches/ contentful-export/",
+    "help": "echo '\n📚 Available Commands:\n  npm run split                  - Split export into batches\n  npm run import                 - Import batches (SDK-based)\n  npm run import:cli             - Import batches (CLI-based, recommended for assets)\n  npm run test:import:cli [N]    - Test CLI import on single batch (default: batch 1)\n  npm run import:direct          - Import full file directly (no batching)\n  npm run validate               - Validate migration\n  npm run resume                 - Resume failed SDK import\n  npm run resume:cli             - Resume failed CLI import\n  npm run cascade-publish        - Publish drafts with dependency resolution\n  npm run cascade-publish:dry-run- Preview cascade publish (no actual publishing)\n  npm run cleanup-drafts         - Remove orphan and invalid drafts\n  npm run strip-validations      - Remove validations from export (before split)\n  npm run restore-validations    - Restore validations after migration\n  npm run clean                  - Remove batches directory\n  npm run clean:all              - Remove batches and export\n'"
+  },
+  "keywords": [
+    "contentful",
+    "migration",
+    "batch",
+    "import",
+    "export",
+    "cms",
+    "content-management",
+    "rate-limit",
+    "bulk-import",
+    "contentful-migration"
+  ],
+  "author": "Faisal Basra <faisal.basra@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/faisalbasra/contentful-batch-migrator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/faisalbasra/contentful-batch-migrator/issues"
+  },
+  "homepage": "https://github.com/faisalbasra/contentful-batch-migrator#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "contentful-import": "^9.4.123",
+    "contentful-management": "^11.61.1"
+  },
+  "devDependencies": {},
+  "files": [
+    "bin/",
+    "batch-config.example.json",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ]
+}
