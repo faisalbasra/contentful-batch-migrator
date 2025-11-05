@@ -34,10 +34,11 @@ async function restoreValidations() {
   console.log(`📅 Created: ${backup.timestamp}`);
   console.log(`📋 Content types to restore: ${backup.contentTypes.length}\n`);
 
-  const { spaceId, environmentId, managementToken } = config.targetSpace;
+  const { spaceId, environmentId, managementToken, host } = config.targetSpace;
 
   console.log(`🎯 Target Space: ${spaceId}`);
-  console.log(`🌍 Environment: ${environmentId}\n`);
+  console.log(`🌍 Environment: ${environmentId}`);
+  console.log(`🌐 Host: ${host || 'api.contentful.com'}\n`);
 
   // Confirm before proceeding
   console.log('⚠️  This will update content types in your target space.');
@@ -46,7 +47,8 @@ async function restoreValidations() {
   // Connect to Contentful
   console.log('🔗 Connecting to Contentful...');
   const client = contentful.createClient({
-    accessToken: managementToken
+    accessToken: managementToken,
+    host: host || 'api.contentful.com'
   });
 
   const space = await client.getSpace(spaceId);
