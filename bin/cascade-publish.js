@@ -116,7 +116,8 @@ async function cascadePublish() {
 
   console.log('🔗 Connecting to Contentful...');
   const client = contentful.createClient({
-    accessToken: config.managementToken
+    accessToken: config.managementToken,
+    host: config.host
   });
 
   const space = await client.getSpace(config.spaceId);
