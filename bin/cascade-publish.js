@@ -64,8 +64,13 @@ function getEntryReferences(entry) {
   return Array.from(references);
 }
 
-// Calculate dependency depth
-function calculateDepth(itemId, dependencyMap, publishedSet, visited = new Set()) {
+// Calculate dependency depth with memoization
+function calculateDepth(itemId, dependencyMap, publishedSet, memo = new Map(), visited = new Set()) {
+  // Check memo cache first
+  if (memo.has(itemId)) {
+    return memo.get(itemId);
+  }
+
   // Avoid circular references
   if (visited.has(itemId)) {
     return Infinity; // Circular reference
@@ -75,24 +80,30 @@ function calculateDepth(itemId, dependencyMap, publishedSet, visited = new Set()
 
   // If no references, depth is 0
   if (references.length === 0) {
+    memo.set(itemId, 0);
     return 0;
   }
 
   // If all references are published, depth is 0 (can publish now)
   const unpublishedRefs = references.filter(refId => !publishedSet.has(refId));
   if (unpublishedRefs.length === 0) {
+    memo.set(itemId, 0);
     return 0;
   }
 
   // Calculate max depth of unpublished references
   visited.add(itemId);
   const depths = unpublishedRefs.map(refId =>
-    calculateDepth(refId, dependencyMap, publishedSet, new Set(visited))
+    calculateDepth(refId, dependencyMap, publishedSet, memo, new Set(visited))
   );
   visited.delete(itemId);
 
   const maxDepth = Math.max(...depths);
-  return maxDepth === Infinity ? Infinity : maxDepth + 1;
+  const result = maxDepth === Infinity ? Infinity : maxDepth + 1;
+
+  // Cache the result
+  memo.set(itemId, result);
+  return result;
 }
 
 async function cascadePublish() {
@@ -186,9 +197,10 @@ async function cascadePublish() {
   console.log('📏 Calculating dependency depths...');
   const itemDepths = new Map();
   const allDraftIds = draftEntries.map(e => e.sys.id);
+  const depthMemo = new Map(); // Memoization cache for better performance
 
   allDraftIds.forEach(id => {
-    const depth = calculateDepth(id, dependencyMap, publishedSet);
+    const depth = calculateDepth(id, dependencyMap, publishedSet, depthMemo);
     itemDepths.set(id, depth);
   });
 
