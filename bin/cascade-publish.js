@@ -124,11 +124,10 @@ async function cascadePublish() {
   const environment = await space.getEnvironment(config.environmentId);
   console.log('✅ Connected\n');
 
-  // Fetch all entries and assets
-  console.log('📊 Analyzing content...');
+  // Fetch all entries
+  console.log('📊 Analyzing entries...');
 
   const allEntries = [];
-  const allAssets = [];
 
   // Fetch entries (paginated)
   let skip = 0;
@@ -147,61 +146,28 @@ async function cascadePublish() {
     if (allEntries.length >= response.total) break;
     await sleep(100); // Small delay to avoid rate limits
   }
-  console.log(' ✓');
-
-  // Fetch assets (paginated)
-  skip = 0;
-  let assetsTotal = 0;
-
-  console.log('   Fetching assets...');
-  while (true) {
-    const response = await environment.getAssets({ limit, skip });
-    allAssets.push(...response.items);
-    assetsTotal = response.total;
-    skip += limit;
-
-    process.stdout.write(`\r   - Fetched ${allAssets.length}/${assetsTotal} assets`);
-
-    if (allAssets.length >= response.total) break;
-    await sleep(100);
-  }
   console.log(' ✓\n');
 
   // Separate published and unpublished
-  const publishedEntries = new Set();
-  const publishedAssets = new Set();
+  const publishedSet = new Set();
   const draftEntries = [];
-  const draftAssets = [];
 
   allEntries.forEach(entry => {
     if (entry.sys.publishedVersion) {
-      publishedEntries.add(entry.sys.id);
+      publishedSet.add(entry.sys.id);
     } else {
       draftEntries.push(entry);
     }
   });
 
-  allAssets.forEach(asset => {
-    if (asset.sys.publishedVersion) {
-      publishedAssets.add(asset.sys.id);
-    } else {
-      draftAssets.push(asset);
-    }
-  });
-
-  const publishedSet = new Set([...publishedEntries, ...publishedAssets]);
-
   console.log('📋 Analysis Results:');
   console.log(`   Total Entries: ${allEntries.length}`);
-  console.log(`   - Published: ${publishedEntries.size}`);
+  console.log(`   - Published: ${publishedSet.size}`);
   console.log(`   - Draft: ${draftEntries.length}`);
-  console.log(`   Total Assets: ${allAssets.length}`);
-  console.log(`   - Published: ${publishedAssets.size}`);
-  console.log(`   - Draft: ${draftAssets.length}`);
-  console.log(`   Total to publish: ${draftEntries.length + draftAssets.length}\n`);
+  console.log(`   Total to publish: ${draftEntries.length}\n`);
 
-  if (draftEntries.length === 0 && draftAssets.length === 0) {
-    console.log('✅ All content is already published! Nothing to do.');
+  if (draftEntries.length === 0) {
+    console.log('✅ All entries are already published! Nothing to do.');
     return;
   }
 
@@ -214,17 +180,12 @@ async function cascadePublish() {
     dependencyMap.set(entry.sys.id, references);
   });
 
-  // Assets have no dependencies
-  draftAssets.forEach(asset => {
-    dependencyMap.set(asset.sys.id, []);
-  });
-
   console.log('   ✓ Dependency graph built\n');
 
   // Calculate depths
   console.log('📏 Calculating dependency depths...');
   const itemDepths = new Map();
-  const allDraftIds = [...draftEntries.map(e => e.sys.id), ...draftAssets.map(a => a.sys.id)];
+  const allDraftIds = draftEntries.map(e => e.sys.id);
 
   allDraftIds.forEach(id => {
     const depth = calculateDepth(id, dependencyMap, publishedSet);
@@ -262,30 +223,26 @@ async function cascadePublish() {
   };
 
   console.log('='.repeat(60));
-  console.log('🚀 Starting Cascade Publishing');
+  console.log('🚀 Starting Cascade Publishing (Entries Only)');
   console.log('='.repeat(60) + '\n');
 
   let waveNum = 1;
 
   for (const depth of sortedDepths) {
     if (depth === Infinity) {
-      console.log(`\n⚠️  Skipping ${depthGroups.get(depth).length} items with circular references\n`);
+      console.log(`\n⚠️  Skipping ${depthGroups.get(depth).length} entries with circular references\n`);
       stats.skipped = depthGroups.get(depth).length;
       continue;
     }
 
     const itemsToPublish = depthGroups.get(depth);
-    console.log(`📦 Wave ${waveNum} (Depth ${depth}): ${itemsToPublish.length} items`);
+    console.log(`📦 Wave ${waveNum} (Depth ${depth}): ${itemsToPublish.length} entries`);
 
     let wavePublished = 0;
     let waveFailed = 0;
 
     for (const itemId of itemsToPublish) {
       try {
-        // Determine if entry or asset
-        const entry = draftEntries.find(e => e.sys.id === itemId);
-        const asset = draftAssets.find(a => a.sys.id === itemId);
-
         if (dryRun) {
           wavePublished++;
           if (wavePublished % 50 === 0) {
@@ -294,27 +251,15 @@ async function cascadePublish() {
           continue;
         }
 
-        if (entry) {
-          const freshEntry = await environment.getEntry(itemId);
+        const freshEntry = await environment.getEntry(itemId);
 
-          // Check if already published
-          if (!freshEntry.sys.publishedVersion || freshEntry.sys.version > freshEntry.sys.publishedVersion) {
-            await freshEntry.publish();
-            publishedSet.add(itemId);
-          }
-
-          wavePublished++;
-        } else if (asset) {
-          const freshAsset = await environment.getAsset(itemId);
-
-          // Check if already published
-          if (!freshAsset.sys.publishedVersion || freshAsset.sys.version > freshAsset.sys.publishedVersion) {
-            await freshAsset.publish();
-            publishedSet.add(itemId);
-          }
-
-          wavePublished++;
+        // Check if already published
+        if (!freshEntry.sys.publishedVersion || freshEntry.sys.version > freshEntry.sys.publishedVersion) {
+          await freshEntry.publish();
+          publishedSet.add(itemId);
         }
+
+        wavePublished++;
 
         if (wavePublished % 50 === 0) {
           process.stdout.write(`\r   Publishing: ${wavePublished}/${itemsToPublish.length}`);
@@ -368,7 +313,7 @@ async function cascadePublish() {
   console.log('='.repeat(60));
   console.log(`⏱️  Duration: ${minutes}m ${seconds}s`);
   console.log(`📊 Results:`);
-  console.log(`   Total items: ${stats.totalItems}`);
+  console.log(`   Total entries: ${stats.totalItems}`);
   console.log(`   ✅ Published: ${stats.published}`);
 
   if (stats.failed > 0) {
@@ -394,12 +339,12 @@ async function cascadePublish() {
   console.log(`\n💾 State saved to: ${stateFile}`);
 
   if (stats.skipped > 0) {
-    console.log(`\n⚠️  ${stats.skipped} items have circular references and need manual review.`);
+    console.log(`\n⚠️  ${stats.skipped} entries have circular references and need manual review.`);
     console.log('   Check the Contentful UI for draft entries and resolve circular dependencies.');
   }
 
   if (stats.failed > 0) {
-    console.log(`\n💡 Tip: Run this script again to retry failed items.`);
+    console.log(`\n💡 Tip: Run this script again to retry failed entries.`);
   }
 
   console.log('');
