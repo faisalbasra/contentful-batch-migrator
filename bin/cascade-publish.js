@@ -5,15 +5,14 @@ const fs = require('fs');
 const path = require('path');
 
 // Load configuration
-const configPath = path.join(process.cwd(), 'batch-config.json');
+const configPath = path.join(process.cwd(), 'cascade-config.json');
 
 if (!fs.existsSync(configPath)) {
-  console.error('❌ batch-config.json not found!');
+  console.error('❌ cascade-config.json not found!');
   process.exit(1);
 }
 
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-const { targetSpace } = config;
 
 // State file
 const stateFile = path.join(process.cwd(), 'cascade-publish-state.json');
@@ -99,9 +98,9 @@ function calculateDepth(itemId, dependencyMap, publishedSet, visited = new Set()
 async function cascadePublish() {
   console.log('🔄 Contentful Cascade Publisher\n');
   console.log('='.repeat(60));
-  console.log(`Space: ${targetSpace.spaceId}`);
-  console.log(`Environment: ${targetSpace.environmentId}`);
-  console.log(`Host: ${targetSpace.host}`);
+  console.log(`Space: ${config.spaceId}`);
+  console.log(`Environment: ${config.environmentId}`);
+  console.log(`Host: ${config.host}`);
 
   if (dryRun) {
     console.log(`Mode: DRY RUN (no actual publishing)`);
@@ -117,11 +116,11 @@ async function cascadePublish() {
 
   console.log('🔗 Connecting to Contentful...');
   const client = contentful.createClient({
-    accessToken: targetSpace.managementToken
+    accessToken: config.managementToken
   });
 
-  const space = await client.getSpace(targetSpace.spaceId);
-  const environment = await space.getEnvironment(targetSpace.environmentId);
+  const space = await client.getSpace(config.spaceId);
+  const environment = await space.getEnvironment(config.environmentId);
   console.log('✅ Connected\n');
 
   // Fetch all entries and assets
@@ -383,8 +382,8 @@ async function cascadePublish() {
 
   // Save state
   const state = {
-    targetSpace: targetSpace.spaceId,
-    environment: targetSpace.environmentId,
+    targetSpace: config.spaceId,
+    environment: config.environmentId,
     completedAt: new Date().toISOString(),
     dryRun: dryRun,
     stats: stats
