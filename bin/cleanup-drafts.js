@@ -81,7 +81,7 @@ exportData.entries.forEach(entry => {
 
 // Analyze assets
 const draftAssets = [];
-const invalidAssetDrafts = [];
+const invalidAssets = [];
 const validPublishedAssets = [];
 const validDraftAssets = [];
 
@@ -89,21 +89,42 @@ exportData.assets.forEach(asset => {
   const isDraft = !asset.sys.publishedVersion ||
                   (asset.sys.version > asset.sys.publishedVersion + 1);
 
-  if (isDraft) {
-    draftAssets.push(asset);
+  // Validate asset file structure for ALL assets
+  let isValid = true;
+  let invalidReason = null;
 
-    // Check if asset has a file
-    const hasFile = asset.fields.file && Object.keys(asset.fields.file).length > 0;
+  if (!asset.fields.file || Object.keys(asset.fields.file).length === 0) {
+    isValid = false;
+    invalidReason = 'Missing file field';
+  } else {
+    // Deep validate each locale
+    for (const locale in asset.fields.file) {
+      const fileData = asset.fields.file[locale];
 
-    if (!hasFile) {
-      invalidAssetDrafts.push({
-        id: asset.sys.id,
-        reason: 'Missing file',
-        asset: asset
-      });
-    } else {
-      validDraftAssets.push(asset);
+      if (!fileData || typeof fileData !== 'object') {
+        isValid = false;
+        invalidReason = `Invalid file data for locale ${locale}`;
+        break;
+      }
+
+      if (!fileData.url || fileData.url.trim() === '') {
+        isValid = false;
+        invalidReason = `Empty or missing URL for locale ${locale}`;
+        break;
+      }
     }
+  }
+
+  if (!isValid) {
+    invalidAssets.push({
+      id: asset.sys.id,
+      isDraft: isDraft,
+      reason: invalidReason,
+      asset: asset
+    });
+  } else if (isDraft) {
+    draftAssets.push(asset);
+    validDraftAssets.push(asset);
   } else {
     validPublishedAssets.push(asset);
   }
@@ -120,10 +141,10 @@ const report = {
     validDraftEntries: validDraftEntries.length,
     validPublishedEntries: validPublishedEntries.length,
     draftAssets: draftAssets.length,
-    invalidAssetDrafts: invalidAssetDrafts.length,
+    invalidAssets: invalidAssets.length,
     validDraftAssets: validDraftAssets.length,
     validPublishedAssets: validPublishedAssets.length,
-    totalToRemove: invalidDrafts.length + orphanDrafts.length + invalidAssetDrafts.length
+    totalToRemove: invalidDrafts.length + orphanDrafts.length + invalidAssets.length
   },
   invalidDrafts: invalidDrafts.map(d => ({
     id: d.id,
@@ -137,8 +158,9 @@ const report = {
     contentType: d.contentType,
     reason: d.reason
   })),
-  invalidAssetDrafts: invalidAssetDrafts.map(d => ({
+  invalidAssets: invalidAssets.map(d => ({
     id: d.id,
+    isDraft: d.isDraft,
     reason: d.reason
   }))
 };
@@ -155,7 +177,7 @@ console.log();
 console.log(`Total Assets:                     ${report.summary.totalAssets}`);
 console.log(`  ├─ Valid Published Assets:      ${report.summary.validPublishedAssets}`);
 console.log(`  ├─ Valid Draft Assets:          ${report.summary.validDraftAssets}`);
-console.log(`  └─ Invalid Asset Drafts:        ${report.summary.invalidAssetDrafts} ⚠️`);
+console.log(`  └─ Invalid Assets:              ${report.summary.invalidAssets} ⚠️`);
 console.log();
 console.log(`Total Items to Remove:            ${report.summary.totalToRemove} 🗑️`);
 console.log('─'.repeat(60));
@@ -181,13 +203,14 @@ if (orphanDrafts.length > 0) {
   }
 }
 
-if (invalidAssetDrafts.length > 0) {
-  console.log('\n🔴 Invalid Asset Drafts (missing file):');
-  invalidAssetDrafts.slice(0, 10).forEach(draft => {
-    console.log(`  • ${draft.id}: ${draft.reason}`);
+if (invalidAssets.length > 0) {
+  console.log('\n🔴 Invalid Assets (file validation failed):');
+  invalidAssets.slice(0, 10).forEach(asset => {
+    const status = asset.isDraft ? 'Draft' : 'Published';
+    console.log(`  • ${asset.id} [${status}]: ${asset.reason}`);
   });
-  if (invalidAssetDrafts.length > 10) {
-    console.log(`  ... and ${invalidAssetDrafts.length - 10} more`);
+  if (invalidAssets.length > 10) {
+    console.log(`  ... and ${invalidAssets.length - 10} more`);
   }
 }
 
@@ -201,7 +224,7 @@ const entriesToRemove = new Set([
   ...orphanDrafts.map(d => d.id)
 ]);
 
-const assetsToRemove = new Set(invalidAssetDrafts.map(d => d.id));
+const assetsToRemove = new Set(invalidAssets.map(d => d.id));
 
 const cleanedData = {
   ...exportData,
