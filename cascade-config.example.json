@@ -1,0 +1,6 @@
+{
+  "spaceId": "YOUR_SPACE_ID",
+  "environmentId": "master",
+  "managementToken": "CFPAT-YOUR_MANAGEMENT_TOKEN",
+  "host": "api.contentful.com"
+}
