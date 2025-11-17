@@ -35,23 +35,34 @@ async function tagDrafts(tagId, dryRun = false, removeTag = false) {
   if (!dryRun && !removeTag) {
     try {
       console.log(`Checking if tag '${tagId}' exists...`);
-      await environment.getTag(tagId);
-      console.log(`✅ Tag '${tagId}' exists\n`);
+      const existingTag = await environment.getTag(tagId);
+      console.log(`✅ Tag '${tagId}' exists (visibility: ${existingTag.sys.visibility})\n`);
     } catch (error) {
-      if (error.message.includes('not found') || error.message.includes('404')) {
+      // Only try to create if it's specifically a 404/not found error
+      const isNotFound = error.status === 404 ||
+                         (error.message && (error.message.includes('not found') || error.message.includes('404')));
+
+      if (isNotFound) {
         console.log(`Tag '${tagId}' not found, creating it...`);
         try {
-          await environment.createTag(tagId, {
+          const newTag = await environment.createTag(tagId, {
             name: tagId,
-            sys: { id: tagId, visibility: 'private' }
+            sys: {
+              visibility: 'private'
+            }
           });
-          console.log(`✅ Tag '${tagId}' created\n`);
+          console.log(`✅ Tag '${tagId}' created (visibility: ${newTag.sys.visibility})\n`);
         } catch (createError) {
-          console.error(`❌ Failed to create tag: ${createError.message}`);
+          console.error(`❌ Failed to create tag:`);
+          console.error(`   Status: ${createError.status || 'N/A'}`);
+          console.error(`   Message: ${createError.message}`);
+          if (createError.details) {
+            console.error(`   Details: ${JSON.stringify(createError.details, null, 2)}`);
+          }
           console.log('Continuing anyway (tag might already exist)...\n');
         }
       } else {
-        console.error(`Warning: Error checking tag: ${error.message}`);
+        console.error(`❌ Error checking tag (Status: ${error.status || 'N/A'}): ${error.message}`);
         console.log('Continuing anyway...\n');
       }
     }
