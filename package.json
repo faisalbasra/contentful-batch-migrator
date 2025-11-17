@@ -14,15 +14,20 @@
     "resume:cli": "node bin/resume-cli.js",
     "cascade-publish": "node bin/cascade-publish.js",
     "cascade-publish:dry-run": "node bin/cascade-publish.js --dry-run",
+    "publish-all": "node bin/publish-all-drafts.js",
+    "publish-all:dry-run": "node bin/publish-all-drafts.js --dry-run",
+    "tag-drafts": "node bin/tag-drafts.js",
     "publish-assets": "node bin/publish-assets.js",
     "publish-assets:dry-run": "node bin/publish-assets.js --dry-run",
     "cleanup-drafts": "node bin/cleanup-drafts.js",
+    "clean-space": "node bin/clean-space.js",
+    "clean-space:dry-run": "node bin/clean-space.js --dry-run",
     "strip-validations": "node bin/strip-validations.js",
     "restore-validations": "node bin/restore-validations.js",
     "transform-uploadfrom": "node bin/transform-to-uploadfrom.js",
     "clean": "rm -rf batches/",
     "clean:all": "rm -rf batches/ contentful-export/",
-    "help": "echo '\n📚 Available Commands:\n  npm run split                  - Split export into batches\n  npm run import                 - Import batches (SDK-based)\n  npm run import:cli             - Import batches (CLI-based, recommended for assets)\n  npm run test:import:cli [N]    - Test CLI import on single batch (default: batch 1)\n  npm run import:direct          - Import full file directly (no batching)\n  npm run validate               - Validate migration\n  npm run resume                 - Resume failed SDK import\n  npm run resume:cli             - Resume failed CLI import\n  npm run publish-assets         - Publish all draft assets\n  npm run publish-assets:dry-run - Preview asset publishing (no actual publishing)\n  npm run cascade-publish        - Publish draft entries with dependency resolution\n  npm run cascade-publish:dry-run- Preview cascade publish (no actual publishing)\n  npm run cleanup-drafts         - Remove orphan and invalid drafts\n  npm run strip-validations      - Remove validations from export (before split)\n  npm run restore-validations    - Restore validations after migration\n  npm run clean                  - Remove batches directory\n  npm run clean:all              - Remove batches and export\n'"
+    "help": "echo '\n📚 Available Commands:\n  npm run split                  - Split export into batches\n  npm run import                 - Import batches (SDK-based)\n  npm run import:cli             - Import batches (CLI-based, recommended for assets)\n  npm run test:import:cli [N]    - Test CLI import on single batch (default: batch 1)\n  npm run import:direct          - Import full file directly (no batching)\n  npm run validate               - Validate migration\n  npm run resume                 - Resume failed SDK import\n  npm run resume:cli             - Resume failed CLI import\n  npm run publish-assets         - Publish all draft assets\n  npm run publish-assets:dry-run - Preview asset publishing (no actual publishing)\n  npm run cascade-publish        - Publish draft entries with dependency resolution\n  npm run cascade-publish:dry-run- Preview cascade publish (no actual publishing)\n  npm run publish-all            - Brute force publish all drafts (run repeatedly for circular deps)\n  npm run publish-all:dry-run    - Preview brute force publish (no actual publishing)\n  npm run tag-drafts <tag> [opts]- Tag all draft entries (use --dry-run to preview, --remove to untag)\n  npm run cleanup-drafts         - Remove orphan and invalid drafts\n  npm run clean-space [opts]     - Delete all entries/content types/assets from space\n  npm run clean-space:dry-run    - Preview space cleanup (no actual deletion)\n  npm run strip-validations      - Remove validations from export (before split)\n  npm run restore-validations    - Restore validations after migration\n  npm run clean                  - Remove batches directory\n  npm run clean:all              - Remove batches and export\n'"
   },
   "keywords": [
     "contentful",
@@ -57,6 +62,7 @@
   "files": [
     "bin/",
     "batch-config.example.json",
+    "cascade-config.example.json",
     "docs/",
     "README.md",
     "LICENSE"

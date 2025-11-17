@@ -21,6 +21,13 @@ const stateFile = path.join(process.cwd(), 'cascade-publish-state.json');
 const args = process.argv.slice(2);
 const dryRun = args.includes('--dry-run');
 
+// Get --skip-tag value
+let skipTag = null;
+const skipTagIndex = args.findIndex(arg => arg === '--skip-tag');
+if (skipTagIndex !== -1 && args[skipTagIndex + 1]) {
+  skipTag = args[skipTagIndex + 1];
+}
+
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -117,6 +124,10 @@ async function cascadePublish() {
     console.log(`Mode: DRY RUN (no actual publishing)`);
   }
 
+  if (skipTag) {
+    console.log(`Skip tag: ${skipTag} (entries with this tag will be skipped)`);
+  }
+
   console.log('='.repeat(60) + '\n');
 
   // Confirm before proceeding
@@ -161,7 +172,7 @@ async function cascadePublish() {
 
   // Separate published and unpublished
   const publishedSet = new Set();
-  const draftEntries = [];
+  let draftEntries = [];
 
   allEntries.forEach(entry => {
     if (entry.sys.publishedVersion) {
@@ -171,10 +182,31 @@ async function cascadePublish() {
     }
   });
 
+  const totalDrafts = draftEntries.length;
+
+  // Filter out entries with skip tag if specified
+  let skippedByTag = [];
+  if (skipTag) {
+    skippedByTag = draftEntries.filter(entry => {
+      const tags = entry.metadata?.tags || [];
+      const tagIds = tags.map(tag => tag.sys.id);
+      return tagIds.includes(skipTag);
+    });
+
+    draftEntries = draftEntries.filter(entry => {
+      const tags = entry.metadata?.tags || [];
+      const tagIds = tags.map(tag => tag.sys.id);
+      return !tagIds.includes(skipTag);
+    });
+  }
+
   console.log('📋 Analysis Results:');
   console.log(`   Total Entries: ${allEntries.length}`);
   console.log(`   - Published: ${publishedSet.size}`);
-  console.log(`   - Draft: ${draftEntries.length}`);
+  console.log(`   - Draft: ${totalDrafts}`);
+  if (skipTag) {
+    console.log(`   - Skipped by tag '${skipTag}': ${skippedByTag.length}`);
+  }
   console.log(`   Total to publish: ${draftEntries.length}\n`);
 
   if (draftEntries.length === 0) {
@@ -231,6 +263,7 @@ async function cascadePublish() {
     published: 0,
     failed: 0,
     skipped: 0,
+    skippedByTag: skippedByTag.length,
     waves: []
   };
 
@@ -325,7 +358,13 @@ async function cascadePublish() {
   console.log('='.repeat(60));
   console.log(`⏱️  Duration: ${minutes}m ${seconds}s`);
   console.log(`📊 Results:`);
-  console.log(`   Total entries: ${stats.totalItems}`);
+  if (stats.skippedByTag > 0) {
+    console.log(`   Total draft entries found: ${stats.totalItems + stats.skippedByTag}`);
+    console.log(`   🏷️  Skipped by tag: ${stats.skippedByTag}`);
+    console.log(`   Attempted to publish: ${stats.totalItems}`);
+  } else {
+    console.log(`   Total entries: ${stats.totalItems}`);
+  }
   console.log(`   ✅ Published: ${stats.published}`);
 
   if (stats.failed > 0) {
@@ -336,7 +375,8 @@ async function cascadePublish() {
     console.log(`   ⚠️  Skipped (circular refs): ${stats.skipped}`);
   }
 
-  console.log(`   📈 Success rate: ${Math.round((stats.published / stats.totalItems) * 100)}%`);
+  const successRate = stats.totalItems > 0 ? Math.round((stats.published / stats.totalItems) * 100) : 0;
+  console.log(`   📈 Success rate: ${successRate}%`);
 
   // Save state
   const state = {
