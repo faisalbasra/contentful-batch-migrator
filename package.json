@@ -4,6 +4,7 @@
   "description": "A robust solution for migrating large Contentful spaces without hitting rate limits",
   "main": "bin/split.js",
   "scripts": {
+    "setup": "node bin/setup.js",
     "split": "node bin/split.js",
     "import": "node bin/import.js",
     "import:cli": "node bin/import-cli.js",
@@ -27,7 +28,7 @@
     "transform-uploadfrom": "node bin/transform-to-uploadfrom.js",
     "clean": "rm -rf batches/",
     "clean:all": "rm -rf batches/ contentful-export/",
-    "help": "echo '\n📚 Available Commands:\n  npm run split                  - Split export into batches\n  npm run import                 - Import batches (SDK-based)\n  npm run import:cli             - Import batches (CLI-based, recommended for assets)\n  npm run test:import:cli [N]    - Test CLI import on single batch (default: batch 1)\n  npm run import:direct          - Import full file directly (no batching)\n  npm run validate               - Validate migration\n  npm run resume                 - Resume failed SDK import\n  npm run resume:cli             - Resume failed CLI import\n  npm run publish-assets         - Publish all draft assets\n  npm run publish-assets:dry-run - Preview asset publishing (no actual publishing)\n  npm run cascade-publish        - Publish draft entries with dependency resolution\n  npm run cascade-publish:dry-run- Preview cascade publish (no actual publishing)\n  npm run publish-all            - Brute force publish all drafts (run repeatedly for circular deps)\n  npm run publish-all:dry-run    - Preview brute force publish (no actual publishing)\n  npm run tag-drafts <tag> [opts]- Tag all draft entries (use --dry-run to preview, --remove to untag)\n  npm run cleanup-drafts         - Remove orphan and invalid drafts\n  npm run clean-space [opts]     - Delete all entries/content types/assets from space\n  npm run clean-space:dry-run    - Preview space cleanup (no actual deletion)\n  npm run strip-validations      - Remove validations from export (before split)\n  npm run restore-validations    - Restore validations after migration\n  npm run clean                  - Remove batches directory\n  npm run clean:all              - Remove batches and export\n'"
+    "help": "echo '\n📚 Contentful Batch Migrator - Available Commands\n\n🚀 Setup:\n  npm run setup                  - Interactive setup wizard\n\n📦 Migration:\n  npm run split                  - Split export into batches\n  npm run import                 - Import batches (SDK-based)\n  npm run import:cli             - Import batches (CLI-based, recommended for assets)\n  npm run test:import:cli [N]    - Test CLI import on single batch (default: batch 1)\n  npm run import:direct          - Import full file directly (no batching)\n  npm run validate               - Validate migration\n  npm run resume                 - Resume failed SDK import\n  npm run resume:cli             - Resume failed CLI import\n\n📤 Publishing:\n  npm run publish-assets         - Publish all draft assets\n  npm run publish-assets:dry-run - Preview asset publishing\n  npm run cascade-publish        - Smart dependency-aware publishing\n  npm run cascade-publish:dry-run- Preview cascade publish\n  npm run publish-all            - Brute force publish (for circular deps)\n  npm run publish-all:dry-run    - Preview brute force publish\n\n🔧 Utilities:\n  npm run tag-drafts <tag> [opts]- Tag all draft entries (--dry-run, --remove)\n  npm run cleanup-drafts         - Remove orphan and invalid drafts\n  npm run clean-space [opts]     - Delete all entries/content types/assets\n  npm run clean-space:dry-run    - Preview space cleanup\n  npm run strip-validations      - Remove validations from export\n  npm run restore-validations    - Restore validations after migration\n  npm run clean                  - Remove batches directory\n  npm run clean:all              - Remove batches and export\n\n📖 Documentation: See docs/ directory for detailed guides\n'"
   },
   "keywords": [
     "contentful",
@@ -61,10 +62,11 @@
   "devDependencies": {},
   "files": [
     "bin/",
-    "batch-config.example.json",
-    "cascade-config.example.json",
+    "config/",
+    ".env.example",
     "docs/",
     "README.md",
+    "CONTRIBUTING.md",
     "LICENSE"
   ]
 }

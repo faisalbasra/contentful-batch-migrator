@@ -6,6 +6,9 @@
 batch-config.json
 import-config.json
 export-config.json
+cascade-config.json
+config/*.json
+!config/*.example.json
 .env
 .env.local
 *.pem
@@ -15,6 +18,7 @@ export-config.json
 # Contentful Export Data (Large Files)
 # ============================================
 contentful-export/
+contentful-export
 batches/
 *.ctfassets.net/
 
@@ -25,12 +29,15 @@ batches/
 import-errors.log
 export-errors.log
 import-state.json
+cascade-publish-state.json
 manifest.json
 logs/
 export-summary.md
 *-summary.md
 *-report.json
 README-BATCHED-IMPORT.md
+validations-backup*.json
+draft-cleanup-report.json
 
 # ============================================
 # Node.js
@@ -86,6 +93,9 @@ temp/
 *.tmp
 *.bak
 *.backup
+test-*.js
+test-*.json
+clean-export.js
 
 # ============================================
 # Personal Learning Files

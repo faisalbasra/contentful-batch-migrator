@@ -58,28 +58,37 @@ This tool:
 ### Quick Start
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/faisalbasra/contentful-batch-migrator.git
 cd contentful-batch-migrator
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# See all available commands
+# 3. Set up configuration
+npm run setup   # Interactive setup wizard (or manual setup below)
+
+# Manual setup (alternative to setup wizard):
+cp config/batch-config.example.json config/batch-config.json
+cp config/cascade-config.example.json config/cascade-config.json
+# Edit config files with your Contentful credentials
+
+# 4. Run the migration
+npm run split    # Step 1: Split export into batches
+npm run import   # Step 2: Import batches sequentially
+npm run validate # Step 3: Validate migration success
+
+# 5. Publish content (if needed)
+npm run cascade-publish  # Smart dependency-aware publishing
+# OR
+npm run publish-all      # Brute force publishing (for circular dependencies)
+```
+
+**First time user?** Check out the [Getting Started Guide](docs/IMPORT-GUIDE.md) for a detailed walkthrough.
+
+See all available commands:
+```bash
 npm run help
-
-# Configure your migration
-cp batch-config.example.json batch-config.json
-# Edit batch-config.json with your credentials
-
-# Configure publishing (if needed)
-cp cascade-config.example.json cascade-config.json
-# Edit cascade-config.json with your target space credentials
-
-# Run the migration
-npm run split    # Step 1: Split export
-npm run import   # Step 2: Import batches
-npm run validate # Step 3: Validate migration
 ```
 
 ### 📚 Available Commands
