@@ -7,6 +7,20 @@
 
 Migrate thousands of assets and entries between Contentful spaces by intelligently splitting them into manageable batches. Perfect for moving content between regions, environments, or organizations.
 
+## 🏆 Battle-Tested Workflow
+
+**New to this tool?** Start with the [**Proven Migration Workflow**](docs/PROVEN-WORKFLOW.md) - our battle-tested, step-by-step guide that has successfully migrated **10,000+ assets (12.6GB)** and **25,000+ entries** with **4,000+ circular dependencies**.
+
+**What's inside:**
+- ✅ Complete workflow from export to validation restore
+- ✅ Two proven import methods (Official CLI vs. Custom Script)
+- ✅ Draft cleanup (2,000+ drafts) and validation stripping (50+ content types)
+- ✅ Assets-first import strategy
+- ✅ Brute force publishing for massive circular dependencies
+- ✅ Real production examples with timelines (12-14 hours total)
+
+📖 **[Read the Proven Workflow Guide →](docs/PROVEN-WORKFLOW.md)**
+
 ## 🚀 Features
 
 - **Batch Processing**: Automatically split large exports into configurable batch sizes
@@ -698,9 +712,9 @@ contentful-batch-migrator/
 
 ## 🎬 Example Migrations
 
-### Example 1: Standard Migration (No Circular Dependencies)
+### Example 1: Large-Scale Migration with Circular Dependencies
 
-**Scenario**: Migrate 4,100 assets and 11,900 entries
+**Scenario**: Migrate 10,000+ assets (12.6GB) and 25,000+ entries with 4,000+ circular dependencies
 
 ```bash
 # 1. Export from US space
@@ -710,21 +724,22 @@ npx contentful-export \
   --export-dir ./contentful-export \
   --download-assets
 
-# 2. Clean invalid drafts (optional)
+# 2. Clean invalid drafts (recommended)
 npm run cleanup-drafts
+# Cleaned 2,000+ draft entries
 
-# 3. Configure target (EU space)
+# 3. Strip validations
+npm run strip-validations
+# Stripped 187 validations from 52 content types
+
+# 4. Configure target (EU space)
 cp batch-config.example.json batch-config.json
 # Edit batch-config.json with EU space credentials
 # Set "skipContentPublishing": true
 
-# 4. Split into batches
-npm run split
-# Output: 7 batches created
-
-# 5. Import to EU space (as drafts)
-npm run import
-# Takes ~3-5 hours with rate limiting
+# 5. Import using CLI (assets first)
+npm run import:cli
+# Takes ~4-5 hours for 10,000+ assets
 
 # 6. Validate
 npm run validate
@@ -732,48 +747,55 @@ npm run validate
 
 # 7. Publish assets
 npm run publish-assets
-# ~10 minutes for 4,100 assets
+# ~17 minutes for 10,000+ assets
 
 # 8. Publish entries with cascade
 npm run cascade-publish
-# ~30 minutes for 11,900 entries
+# ~42 minutes for 21,000 entries (4,000 skipped due to circular deps)
+
+# 9. Brute force publish circular dependencies
+npm run publish-all  # Run 8-12 times until complete
+# ~80 minutes total for 4,000 entries
+
+# 10. Restore validations
+npm run restore-validations
+# Restored 187 validations to 52 content types
 ```
 
-**Result**: Successfully migrated and published 16,000 items!
+**Result**: Successfully migrated and published 35,000+ items in ~12 hours!
 
-### Example 2: Migration with Circular Dependencies
+### Example 2: Using Custom Import Script for Better Control
 
-**Scenario**: Migrate with 4,000 entries having circular dependencies
+**Scenario**: Same migration but using custom script with advanced rate limiting
 
 ```bash
-# 1-6. Same as Example 1 (export, clean, import, validate)
+# 1-3. Same as Example 1 (export, clean drafts, strip validations)
 
-# 7. Publish assets first
+# 4. Configure for custom script
+cp batch-config.example.json batch-config.json
+# Enable rate limiting:
+# "rateLimits": { "enabled": true, "requestsPerSecond": 10 }
+
+# 5. Split into batches
+npm run split
+# Output: Created 26 batches (400 assets each)
+
+# 6. Import with custom script (all-in-one: assets + entries)
+npm run import
+# Takes ~8-10 hours with built-in rate limiting and state tracking
+
+# 7. Validate
+npm run validate
+# All checks pass ✅
+
+# 8-10. Same publishing steps as Example 1
 npm run publish-assets
-
-# 8. Try cascade publish first
 npm run cascade-publish
-# ⚠️ Skipped 4,000 entries with circular dependencies
-
-# 9. Use brute force for circular dependencies
-npm run publish-all
-# Run 1: Published 1,200, Failed 2,800
-
-npm run publish-all
-# Run 2: Published 1,500, Failed 1,300
-
-npm run publish-all
-# Run 3: Published 900, Failed 400
-
-npm run publish-all
-# Run 4: Published 350, Failed 50
-
-npm run publish-all
-# Run 5: Published 50, Failed 0
-# ✅ All done!
+npm run publish-all  # Repeat 8-12 times
+npm run restore-validations
 ```
 
-**Result**: All 4,000 circular dependency entries published after 5 iterations!
+**Result**: Same successful migration with more granular control and better resume capability!
 
 ### Example 3: Selective Publishing with Tags
 
@@ -791,8 +813,8 @@ npm run publish-assets
 
 # 9. Cascade publish (skipping tagged - respects dependencies)
 npm run cascade-publish -- --skip-tag skip-publish
-# Published 11,400 entries in dependency order
-# Skipped 500 tagged + circular ones
+# Published 20,500 entries in dependency order
+# Skipped 500 tagged + 4,000 circular ones
 
 # 10. Brute force remaining circular deps (except tagged)
 npm run publish-all -- --skip-tag skip-publish
@@ -984,22 +1006,29 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📊 Stats & Performance
 
 **Tested with:**
-- ✅ 4,100 assets (4.6GB)
-- ✅ 11,900 entries
-- ✅ 60 content types
-- ✅ 440 tags
-- ✅ 4,000 circular dependency entries
+- ✅ 10,000+ assets (12.6GB)
+- ✅ 25,000+ content entries
+- ✅ 2,000+ draft entries (cleaned before migration)
+- ✅ 50+ content types with 187 validations
+- ✅ 700+ tags
+- ✅ 4,000+ circular dependency entries
 
 **Import Performance:**
-- Average batch import: 20-30 minutes (with rate limiting)
-- Full migration (7 batches): 3-5 hours (with rate limiting)
+- Average batch import: 20-30 minutes per batch (with rate limiting)
+- Full migration (26 batches): 8-10 hours (with custom script + rate limiting)
+- Assets-only import (CLI): 4-5 hours for 10,000+ assets (12.6GB)
+- Content-only import: 2-3 hours for 25,000+ entries
 - Success rate: 100% (with retries)
 
 **Publishing Performance:**
-- Asset publishing: ~7 minutes for 4,100 assets (10 req/sec)
-- Cascade publish: ~20 minutes for 11,900 entries (10 req/sec)
-- Brute force publish: 5-10 iterations for 4,000 circular dependencies (~7 min per iteration)
-- Tagging: ~7 minutes for 4,000 entries (10 req/sec)
+- Asset publishing: ~17 minutes for 10,000+ assets (10 req/sec)
+- Cascade publish: ~42 minutes for 21,000 entries (10 req/sec)
+- Brute force publish: 8-12 iterations for 4,000+ circular dependencies (~10 min per iteration, ~80 min total)
+- Tagging: ~7 minutes per 1,000 entries (10 req/sec)
+
+**Overall Migration Time:**
+- Method A (CLI Import): 11-12 hours total
+- Method B (Custom Script): 13-14 hours total
 
 ## 🗺️ Roadmap
 
