@@ -19,8 +19,10 @@ config/*.json
 # ============================================
 contentful-export/
 contentful-export
+contentful-export--del/
 batches/
 *.ctfassets.net/
+contentful sync region.md
 
 # ============================================
 # Logs & State Files
