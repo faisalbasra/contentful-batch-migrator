@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/faisalbasra/contentful-batch-migrator#readme
+    about: Read the full documentation and guides
+  - name: 🎯 Proven Workflow Guide
+    url: https://github.com/faisalbasra/contentful-batch-migrator/blob/main/docs/PROVEN-WORKFLOW.md
+    about: Battle-tested migration workflow with production examples
+  - name: 🔧 Troubleshooting Guide
+    url: https://github.com/faisalbasra/contentful-batch-migrator/blob/main/docs/TROUBLESHOOTING.md
+    about: Common issues and solutions
