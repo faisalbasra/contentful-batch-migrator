@@ -5,8 +5,17 @@ const path = require('path');
 const contentful = require('contentful-management');
 const RateLimiter = require('./rateLimiter');
 
-// Load configuration
-const config = JSON.parse(fs.readFileSync('./batch-config.json', 'utf8'));
+// Load configuration (check config/ directory first, fallback to root)
+const configPath = fs.existsSync('./config/batch-config.json')
+  ? './config/batch-config.json'
+  : './batch-config.json';
+
+if (!fs.existsSync(configPath)) {
+  console.error('❌ batch-config.json not found! Please copy config/batch-config.example.json to config/batch-config.json and configure it.');
+  process.exit(1);
+}
+
+const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 
 const {
   outputDir,

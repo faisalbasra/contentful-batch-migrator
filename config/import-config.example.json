@@ -1,0 +1,15 @@
+{
+  "spaceId": "YOUR_TARGET_SPACE_ID",
+  "environmentId": "master",
+  "managementToken": "YOUR_CONTENTFUL_MANAGEMENT_TOKEN",
+  "contentFile": "./contentful-export/exported-space.json",
+  "skipContentPublishing": true,
+  "skipContentModel": false,
+  "skipContentUpdates": false,
+  "skipAssetUpdates": false,
+  "uploadAssets": true,
+  "assetsDirectory": "./contentful-export",
+  "host": "api.contentful.com",
+  "retryLimit": 5,
+  "errorLogFile": "./import-errors.log"
+}

@@ -4,11 +4,14 @@ const contentful = require('contentful-management');
 const fs = require('fs');
 const path = require('path');
 
-// Load configuration
-const configPath = path.join(process.cwd(), 'cascade-config.json');
+// Load configuration (check config/ directory first, fallback to root)
+let configPath = path.join(process.cwd(), 'config/cascade-config.json');
+if (!fs.existsSync(configPath)) {
+  configPath = path.join(process.cwd(), 'cascade-config.json');
+}
 
 if (!fs.existsSync(configPath)) {
-  console.error('❌ cascade-config.json not found!');
+  console.error('❌ cascade-config.json not found! Please copy config/cascade-config.example.json to config/cascade-config.json and configure it.');
   process.exit(1);
 }
 

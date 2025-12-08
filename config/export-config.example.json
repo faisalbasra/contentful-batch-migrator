@@ -1,0 +1,17 @@
+{
+  "spaceId": "YOUR_SOURCE_SPACE_ID",
+  "environmentId": "master",
+  "managementToken": "YOUR_CONTENTFUL_MANAGEMENT_TOKEN",
+  "exportDir": "./contentful-export",
+  "contentFile": "exported-space.json",
+  "saveFile": true,
+  "includeDrafts": true,
+  "includeArchived": true,
+  "downloadAssets": true,
+  "maxAllowedLimit": 1000,
+  "host": "api.contentful.com",
+  "queryEntries": [],
+  "queryAssets": [],
+  "useVerboseRenderer": false,
+  "errorLogFile": "./export-errors.log"
+}
